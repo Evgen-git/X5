@@ -1,0 +1,116 @@
+-- OE
+SELECT DISTINCT ON (orgeh_1.cfo) 
+   orgeh_1.cfo AS "id",
+   orgeh_1.ltext AS "name",
+   pernr_6.email AS "responsibleid",
+   pernr_6.cell AS "contacts",
+   orgeh_1.addr AS "address",
+   orgeh_1.addr AS "interviewaddress",
+   pernr_5.fio AS "dmfio",
+   orgeh_1.email AS "dmemail",
+   pernr_6.email AS "rmpemail",
+   pernr_7.email AS "nooemail",
+   pernr_5.cell AS "dmphone",
+   pernr_8.email AS "supervisoremail",
+   pernr_8.fio AS "supervisorfio",
+   orgeh_1.typeoe AS "orgunittype",
+   'null' AS "regionaloffice",
+   orgeh_3.ltext AS "cluster", 
+   orgeh_5.ltext AS "division",
+   orgeh_6.ltext AS "macroregion",
+   'null' AS "category",
+   orgeh_1.id AS "sapid",
+   orgeh_1.cfo AS "cfoid",
+   orgeh_1.begda AS "openingdata",
+   CASE
+   WHEN orgeh_1.is_archive = true OR orgeh_1.redun = 'X'
+   THEN true
+   ELSE false
+   END AS "is_archive"
+FROM orgeh AS orgeh_1
+JOIN orgeh AS orgeh_2 ON orgeh_1.parentid = orgeh_2.id
+JOIN orgeh AS orgeh_3 ON orgeh_2.parentid = orgeh_3.id AND 
+                         orgeh_3.typeoe = 'Кластер/Регион' AND 
+                         orgeh_1.stext LIKE '%Пятерочка%' AND
+                         orgeh_3.stext IN ('Кластер Южный Урал 12 Нефтекамск','Кластер Южный Урал 15 Оренбург Юг')
+JOIN orgeh AS orgeh_4 ON orgeh_3.parentid = orgeh_4.id
+JOIN orgeh AS orgeh_5 ON orgeh_4.parentid = orgeh_5.id
+JOIN orgeh AS orgeh_6 ON orgeh_5.parentid = orgeh_6.id
+LEFT JOIN plans AS plans_1 ON plans_1.parentid = orgeh_1.id AND plans_1.stell = '50000566'
+LEFT JOIN pernr AS pernr_1 ON pernr_1.plans = plans_1.id
+JOIN orgeh AS orgeh_7 ON orgeh_7.parentid = orgeh_3.id AND orgeh_7.typeoe LIKE 'ЦО%'
+JOIN orgeh AS orgeh_8 ON orgeh_8.parentid = orgeh_7.id AND orgeh_8.stext = 'Персонал'
+JOIN plans AS plans_2 ON plans_2.parentid = orgeh_8.id AND plans_2.stell = '52036730'
+JOIN pernr AS pernr_2 ON plans_2.id = pernr_2.plans
+JOIN orgeh AS orgeh_9 ON orgeh_9.parentid = orgeh_3.id
+LEFT JOIN orgeh AS orgeh_10 ON orgeh_10.parentid = orgeh_9.id AND orgeh_10.stext = 'Отдел операций'
+LEFT JOIN plans AS plans_3 ON plans_3.parentid = orgeh_10.id AND  plans_3.stell = '51180462'
+LEFT JOIN pernr AS pernr_3 ON plans_3.id = pernr_3.plans
+  
+LEFT JOIN spv ON spv.cfo = orgeh_1.cfo
+LEFT JOIN pernr AS pernr_4 ON pernr_4.id = spv.id
+
+LEFT JOIN pernr AS pernr_5 ON pernr_1.hpern = pernr_5.id
+LEFT JOIN pernr AS pernr_6 ON pernr_2.hpern = pernr_6.id
+LEFT JOIN pernr AS pernr_7 ON pernr_3.hpern = pernr_7.id
+LEFT JOIN pernr AS pernr_8 ON pernr_4.hpern = pernr_8.id
+
+ORDER BY orgeh_1.cfo
+
+
+-- USERS
+SELECT DISTINCT ON (pernr_2.id)
+pernr_2.usrid AS "login",
+pernr_2.fio AS "fio",
+CASE 
+WHEN pernr.plans = plans_1.id
+  THEN orgeh_1.email
+ELSE pernr_2.email
+END AS "email",
+pernr_2.cell AS "phone",
+CASE 
+WHEN pernr.plans = plans_1.id
+  THEN plans_1.ltext
+ELSE plans_2.ltext
+END AS "position",
+CASE 
+WHEN pernr.plans = plans_1.id
+  THEN 'Директор Магазина'
+WHEN plans_2.stell = '52036730' THEN 'Региональный Менеджер по подбору'
+ELSE 'Супервайзер'
+END AS "role",
+pernr_2.is_archive
+FROM orgeh AS orgeh_1
+JOIN orgeh AS orgeh_2 ON orgeh_1.parentid = orgeh_2.id
+JOIN orgeh AS orgeh_3 ON orgeh_2.parentid = orgeh_3.id AND 
+  orgeh_1.stext LIKE '%Пятерочка%' AND
+  orgeh_3.typeoe = 'Кластер/Регион' AND 
+  orgeh_3.stext IN (
+        'Кластер Южный Урал 15 Оренбург Юг',
+        'Кластер Южный Урал 16 Оренбург Запад',
+        'Кластер Южный Урал 17 Оренбург Север',
+        'Кластер Южный Урал 08 Орск',
+        'Кластер Южный Урал 09 Октябрьский',
+        'Кластер Южный Урал 10 Салават',
+        'Кластер Южный Урал 11 Уфа Север',
+        'Кластер Южный Урал 13 Уфа Юг',
+        'Кластер Южный Урал 14 Стерлитамак',
+        'Кластер Южный Урал 12 Нефтекамск'
+)
+JOIN orgeh AS orgeh_4 ON orgeh_4.parentid = orgeh_3.id
+JOIN orgeh AS orgeh_5 ON orgeh_5.parentid = orgeh_4.id
+JOIN plans AS plans_1 ON plans_1.parentid = orgeh_1.id AND
+   plans_1.stell IN ('50000566', '50000583')
+JOIN plans AS plans_2 ON plans_2.parentid = orgeh_5.id AND plans_2.stell in ('52036730', '50000741')
+JOIN pernr ON pernr.plans IN (plans_1.id, plans_2.id)
+JOIN pernr AS pernr_2 ON pernr.hpern = pernr_2.id
+ORDER BY pernr_2.id
+
+-- потребности
+SELECT orgeh.cfo AS "cfo", stell AS "stell", COUNT(plans.id) AS "plan", SUM(CASE WHEN pernr.is_archive != true THEN 1 ELSE 0 END) AS "fact" 
+FROM plans
+LEFT JOIN pernr ON pernr.plans = plans.id
+JOIN orgeh ON plans.parentid = orgeh.id AND orgeh.redun != 'X' AND orgeh.is_archive != true
+WHERE plans.is_archive != true AND plans.parentid = ANY(:oe)
+AND stell IN ('50000682', '50616757', '50000665', '50000535', '50000583', '50000566')
+GROUP BY stell, orgeh.cfo
