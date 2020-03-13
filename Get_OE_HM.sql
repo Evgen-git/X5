@@ -2,7 +2,7 @@
 --begin;
 
 --CREATE TEMPORARY TABLE IF NOT EXISTS tmp_tab1 ON COMMIT drop AS
-drop TABLE to_del_tab1;
+drop TABLE IF exists to_del_tab1;
 CREATE TABLE to_del_tab1 AS
 SELECT id,parentid,begda,endda,typeoe,stext,cfo,mvz,email,addr,is_archive,redun
 FROM orgeh h
@@ -12,7 +12,7 @@ where CURRENT_DATE <= to_date(endda,'YYYYMMDD')
 
 
 --CREATE TEMPORARY TABLE IF NOT EXISTS tmp_tab2 ON COMMIT drop AS
-drop TABLE to_del_tab2;
+drop TABLE  IF exists to_del_tab2;
 CREATE TABLE to_del_tab2 AS
 with RECURSIVE q AS (SELECT h.id as root_id, 1 as lev,h.id,h.parentid,h.typeoe
                        FROM orgeh h
@@ -38,39 +38,42 @@ from q_info;
 
 
 --CREATE TEMPORARY TABLE IF NOT EXISTS tmp_tab3 ON COMMIT drop AS
-drop TABLE to_del_tab3;
+drop TABLE  IF exists to_del_tab3;
 CREATE TABLE to_del_tab3 AS
-with staff as (select pl.id, pl.begda, pl.endda, pl.parentid, pl.stext, pl.ltext, pl.stell, pl.is_archive, pl.redun, ps.post_name, ps.post_role 
-                 from vw_type_post ps inner join "plans" pl on (ps.post_code =pl.stell)
+with staff as (select pl.id, pl.begda, pl.endda, pl.parentid, pl.stext, pl.ltext, pl.stell, pl.is_archive, pl.redun, ps.post_name --, ps.post_role 
+                 from "plans" pl left join vw_type_post ps on (ps.post_code =pl.stell)
                 where  CURRENT_DATE between to_date(pl.begda,'YYYYMMDD') and to_date(pl.endda,'YYYYMMDD')
-                  and  pl.stell in ('50000566'/*дм*/,'50000583'/*здм*/,'52036730'/*рмп*/,'50000741'/*спв*/,'50175446'/*дк*/)),
+                  and  pl.stell in ('50000566'/*дм*/,'50000583'/*здм*/,'52036730'/*рмп*/,'50000741'/*спв*/,'50175446'/*дк*/,'52036679'/*дк*/)),
      pers  as (select id, "plans", fio, usrid, email, cell, gbdat, is_archive, hpern
                  from (select id, "plans", fio, usrid, email, cell, gbdat, is_archive, hpern,
                               count(1) over (partition by usrid) as dbl_usrid 
                          from pernr
                         where usrid is not null) t
                 where dbl_usrid=1),
-     pers_by_staff as (select st.id as id_staff, st.post_name as type_staff, post_role as type_staff_role, st.parentid as parentid_staff,st.stell,st.stext as stext_staff, st.begda as begda_staff,st.endda as endda_staff, st.ltext as ltext_staff,st.is_archive as is_archive_staff, st.redun as redun_staff, 
+     pers_by_staff as (select st.id as id_staff, st.post_name as type_staff, --post_role as type_staff_role, 
+     							st.parentid as parentid_staff,st.stell,st.stext as stext_staff, st.begda as begda_staff,st.endda as endda_staff, st.ltext as ltext_staff,st.is_archive as is_archive_staff, st.redun as redun_staff, 
                               ps.id as id_pers, ps.fio, ps.usrid , ps.email as email_pers, ps.cell as cell_pers, ps.gbdat , ps.is_archive as is_archive_pers, ps.hpern
                          from pers ps, staff st    
                         where ps."plans"=st.id)           
-select * 
+select * 		
   from pers_by_staff;
 
 -- *USERS*
 select t3.usrid as Login,
        t3.fio,
        case when stell in ('50000566','50000583') then og.email
-            when stell in ('50000741','52036730','51671102') then t3.email_pers
+            when stell in ('50000741','52036730','50175446','52036679') then t3.email_pers
         end as Email,
        t3.cell_pers as phonenumber,
        t3.ltext_staff as "position", 
        0 as "version", 
-       t3.is_archive_pers as is_archived,
-       t3.type_staff_role
+       t3.is_archive_pers as is_archived
+       --,t3.type_staff_role
+       ,t3.type_staff
   from to_del_tab3 t3 left join orgeh og on (t3.parentid_staff=og.id) ;
-
+where 
+ 
 -- *OE*
 
-  
+select * from vw_type_post
   
