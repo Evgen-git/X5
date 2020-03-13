@@ -7,7 +7,7 @@ CREATE TABLE to_del_tab1 AS
 SELECT id,parentid,begda,endda,typeoe,stext,cfo,mvz,email,addr,is_archive,redun
 FROM orgeh h
 where CURRENT_DATE <= to_date(endda,'YYYYMMDD')
-  and typeoe = 'ÐŸÐ¾Ð´Ñ€Ð°Ð·Ð´ÐµÐ»ÐµÐ½Ð¸Ðµ'
+  and typeoe = 'Ïîäðàçäåëåíèå'
   and cfo is not null;
 
 
@@ -20,13 +20,13 @@ with RECURSIVE q AS (SELECT h.id as root_id, 1 as lev,h.id,h.parentid,h.typeoe
                       UNION ALL
                      SELECT q.root_id,q.lev+1 as lev,hi.id,hi.parentid,hi.typeoe
                        FROM q JOIN orgeh hi ON hi.id = q.parentid),
-              q_pivot as (select max(case typeoe when 'Ð¢Ð¾Ñ€Ð³Ð¾Ð²Ð°Ñ ÑÐµÑ‚ÑŒ' then id end) as ts_id, 
-                                 max(case typeoe when 'ÐœÐ°ÐºÑ€Ð¾Ð ÐµÐ³Ð¸Ð¾Ð½' then id end) as makro_id, 
-                                 max(case typeoe when 'ÐšÐ»Ð°ÑÑ‚ÐµÑ€/Ð ÐµÐ³Ð¸Ð¾Ð½' then id end) as cluster_id, 
-                                 max(case typeoe when 'Ð”Ð¸Ð²Ð¸Ð·Ð¸Ð¾Ð½' then id end) as division_id,
+              q_pivot as (select max(case typeoe when 'Òîðãîâàÿ ñåòü' then id end) as ts_id, 
+                                 max(case typeoe when 'ÌàêðîÐåãèîí' then id end) as makro_id, 
+                                 max(case typeoe when 'Êëàñòåð/Ðåãèîí' then id end) as cluster_id, 
+                                 max(case typeoe when 'Äèâèçèîí' then id end) as division_id,
                                  root_id as dep_id
                             from q
-                            where typeoe in ('ÐŸÐ¾Ð´Ñ€Ð°Ð·Ð´ÐµÐ»ÐµÐ½Ð¸Ðµ','Ð”Ð¸Ð²Ð¸Ð·Ð¸Ð¾Ð½','ÐœÐ°ÐºÑ€Ð¾Ð ÐµÐ³Ð¸Ð¾Ð½','ÐšÐ»Ð°ÑÑ‚ÐµÑ€/Ð ÐµÐ³Ð¸Ð¾Ð½','Ð¢Ð¾Ñ€Ð³Ð¾Ð²Ð°Ñ ÑÐµÑ‚ÑŒ')
+                            where typeoe in ('Ïîäðàçäåëåíèå','Äèâèçèîí','ÌàêðîÐåãèîí','Êëàñòåð/Ðåãèîí','Òîðãîâàÿ ñåòü')
                             group by root_id),
              q_info as (select t1.ts_id,t1.makro_id,t1.cluster_id,t1.dep_id,
                                t2.parentid,t2.begda,t2.endda,t2.typeoe,t2.stext,t2.cfo,t2.mvz,t2.email,t2.addr,t2.is_archive,t2.redun   
@@ -43,7 +43,7 @@ CREATE TABLE to_del_tab3 AS
 with staff as (select pl.id, pl.begda, pl.endda, pl.parentid, pl.stext, pl.ltext, pl.stell, pl.is_archive, pl.redun, ps.post_name --, ps.post_role 
                  from "plans" pl left join vw_type_post ps on (ps.post_code =pl.stell)
                 where  CURRENT_DATE between to_date(pl.begda,'YYYYMMDD') and to_date(pl.endda,'YYYYMMDD')
-                  and  pl.stell in ('50000566'/*Ð´Ð¼*/,'50000583'/*Ð·Ð´Ð¼*/,'52036730'/*Ñ€Ð¼Ð¿*/,'50000741'/*ÑÐ¿Ð²*/,'50175446'/*Ð´Ðº*/,'52036679'/*Ð´Ðº*/)),
+                  and  pl.stell in ('50000566'/*äì*/,'50000583'/*çäì*/,'52036730'/*ðìï*/,'50000741'/*ñïâ*/,'50175446'/*äê*/,'52036679'/*äê*/)),
      pers  as (select id, "plans", fio, usrid, email, cell, gbdat, is_archive, hpern
                  from (select id, "plans", fio, usrid, email, cell, gbdat, is_archive, hpern,
                               count(1) over (partition by usrid) as dbl_usrid 
