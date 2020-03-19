@@ -26,6 +26,11 @@ where pk in (select pk
               where pk <> max_pk);
 
 
+delete from spv
+where pk in (select pk 
+               from (select pk,max(pk) over (partition by id,cfo,begda,endda,"type",is_archive) as max_pk 
+                       from  spv) f
+              where pk <> max_pk);
 
 
 
